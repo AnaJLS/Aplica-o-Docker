@@ -1,6 +1,5 @@
 name: Build e Publica Imagem Docker
 
-# Dispara em push na main ou quando uma release é criada
 on:
   push:
     branches:
@@ -14,14 +13,12 @@ jobs:
 
     permissions:
       contents: read
-      packages: write   # necessário para publicar no GitHub Container Registry
+      packages: write
 
     steps:
-      # 1) Faz checkout do repositório
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      # 2) Faz login no GitHub Container Registry (ghcr.io)
       - name: Login no GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -29,7 +26,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 3) Extrai metadados para nomear e tagear a imagem
       - name: Gerar metadados da imagem
         id: meta
         uses: docker/metadata-action@v5
@@ -40,7 +36,6 @@ jobs:
             type=semver,pattern={{version}}
             type=sha,prefix=sha-
 
-      # 4) Constrói e publica a imagem no registry
       - name: Build e Push da imagem
         uses: docker/build-push-action@v5
         with:
