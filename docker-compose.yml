@@ -1,0 +1,57 @@
+services:
+
+  # -------------------------------------------------------
+  # Serviço 1 – APP
+  # Roda o algoritmo de caminhos e salva resultados em JSON
+  # -------------------------------------------------------
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: caminhos_app
+    environment:
+      - ILHA_ALVO=${ILHA_ALVO}         # qual ilha processar (do .env)
+      - PASTA_SAIDA=/dados/resultados  # onde salvar dentro do contêiner
+      - RANDOM_SEED=${RANDOM_SEED}     # semente para as caminhadas aleatórias
+    volumes:
+      - resultados_volume:/dados/resultados   # volume compartilhado com a API
+    restart: "no"   # executa uma vez e encerra (não é um servidor)
+
+  # -------------------------------------------------------
+  # Serviço 2 – API
+  # Lê os resultados do volume e os expõe como REST JSON
+  # -------------------------------------------------------
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: caminhos_api
+    environment:
+      - PASTA_RESULTADOS=/dados/resultados
+      - APP_PORT=5000
+    volumes:
+      - resultados_volume:/dados/resultados   # mesmo volume do serviço app
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  # -------------------------------------------------------
+  # Serviço 3 – NGINX
+  # Faz proxy reverso para a API e serve o frontend estático
+  # -------------------------------------------------------
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: caminhos_nginx
+    ports:
+      - "${NGINX_PORT}:80"    # porta configurada no .env (padrão 8080)
+    depends_on:
+      - api
+    restart: unless-stopped
+
+# -------------------------------------------------------
+# Volume nomeado compartilhado entre 'app' e 'api'
+# -------------------------------------------------------
+volumes:
+  resultados_volume:
