@@ -1,9 +1,6 @@
 services:
 
-  # -------------------------------------------------------
-  # Serviço 1 – APP
-  # Roda o algoritmo de caminhos e salva resultados em JSON
-  # -------------------------------------------------------
+  # 1 - Roda o algoritmo de caminhos e salva resultados em JSON
   app:
     build:
       context: ./app
@@ -17,10 +14,8 @@ services:
       - resultados_volume:/dados/resultados   # volume compartilhado com a API
     restart: "no"   # executa uma vez e encerra (não é um servidor)
 
-  # -------------------------------------------------------
-  # Serviço 2 – API
-  # Lê os resultados do volume e os expõe como REST JSON
-  # -------------------------------------------------------
+
+  # 2- Lê os resultados do volume e os expõe como REST JSON
   api:
     build:
       context: ./api
@@ -35,10 +30,8 @@ services:
       - app
     restart: unless-stopped
 
-  # -------------------------------------------------------
-  # Serviço 3 – NGINX
-  # Faz proxy reverso para a API e serve o frontend estático
-  # -------------------------------------------------------
+
+  # 3-Faz proxy reverso para a API e serve o frontend estático
   nginx:
     build:
       context: ./nginx
@@ -50,8 +43,6 @@ services:
       - api
     restart: unless-stopped
 
-# -------------------------------------------------------
-# Volume nomeado compartilhado entre 'app' e 'api'
-# -------------------------------------------------------
+
 volumes:
   resultados_volume:

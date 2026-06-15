@@ -1,0 +1,51 @@
+name: Build e Publica Imagem Docker
+
+# Dispara em push na main ou quando uma release é criada
+on:
+  push:
+    branches:
+      - main
+  release:
+    types: [published]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write   # necessário para publicar no GitHub Container Registry
+
+    steps:
+      # 1) Faz checkout do repositório
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      # 2) Faz login no GitHub Container Registry (ghcr.io)
+      - name: Login no GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 3) Extrai metadados para nomear e tagear a imagem
+      - name: Gerar metadados da imagem
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/caminhos-app
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=sha,prefix=sha-
+
+      # 4) Constrói e publica a imagem no registry
+      - name: Build e Push da imagem
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app
+          file: ./app/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
